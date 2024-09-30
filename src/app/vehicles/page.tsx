@@ -1,23 +1,23 @@
 "use client";
 
 import api from "@/services/api";
-import type { Vehicle, VehicleTypes } from "@/types/vehicles";
+import type { Vehicle } from "@/types/vehicles";
 import { useEffect, useState } from "react";
 import { VehicleCard } from "./components/vehicle-card";
-import { Input } from "@/components/ui/input";
 import { CirclePlus } from "lucide-react";
-import { NewSelect } from "@/components/select";
 import { Button } from "@/components/ui/button";
 import { VehicleSheet } from "./components/vehicle-sheet";
-
-const options: VehicleTypes[] = ["car", "motorcycle", "truck", "bus"];
+import Loading from "@/components/loading";
 
 export default function VehiclesPage() {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [vehicles, setVehicles] = useState<Array<Vehicle>>([]);
 
   const getVehicles = async () => {
+    setIsLoading(true);
     const { data } = await api.get("/vehicles");
     setVehicles(data);
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -25,15 +25,9 @@ export default function VehiclesPage() {
   }, []);
 
   return (
-    <div className="h-screen w-screen p-8 flex gap-3 flex-col">
-      <div className="flex flex-col md:flex-row justify-between">
-        <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
-          <Input placeholder="Search for a sign" className="w-full md:w-auto" />
-          <div className="w-full md:w-auto">
-            <NewSelect placeholder="Filter by type" options={options} />
-          </div>
-        </div>
-
+    <div className="p-8 flex gap-10 flex-col">
+      {isLoading && <Loading />}
+      <div className="flex flex-col md:flex-row justify-end gap-4">
         <VehicleSheet>
           <Button className="flex items-center gap-2 w-full md:w-auto mt-3 md:mt-0">
             New vehicle <CirclePlus className="w-4 h-4" />
@@ -41,9 +35,13 @@ export default function VehiclesPage() {
         </VehicleSheet>
       </div>
 
-      {vehicles.map((vehicle) => (
-        <VehicleCard key={vehicle.id} {...vehicle} />
-      ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
+        {vehicles.map((vehicle) => (
+          <div key={vehicle.id} className="w-full">
+            <VehicleCard {...vehicle} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

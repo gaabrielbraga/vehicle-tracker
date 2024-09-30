@@ -12,8 +12,24 @@ import {
 import { Vehicle } from "@/types/vehicles";
 import { Pencil, Trash2 } from "lucide-react";
 import { VehicleSheet } from "./vehicle-sheet";
+import api from "@/services/api";
+import { toast } from "sonner";
 
-export function VehicleCard({ placa, lat, lng, speed, status, type }: Vehicle) {
+export function VehicleCard({
+  id,
+  placa,
+  lat,
+  lng,
+  speed,
+  status,
+  type,
+}: Vehicle) {
+  const handleDeleteVehicle = async () => {
+    await api.delete(`/vehicles/${id}`).then(() => {
+      toast.success("Vehicle deleted successfully");
+    });
+  };
+
   return (
     <Card className="bg-white text-black dark:bg-gray-800 dark:text-white">
       <CardHeader>
@@ -21,7 +37,7 @@ export function VehicleCard({ placa, lat, lng, speed, status, type }: Vehicle) {
           {placa} <Badge>{type.toUpperCase()}</Badge>
         </CardTitle>
         <CardDescription>
-          <Badge variant={status === "stopped" ? "destructive" : "default"}>
+          <Badge variant={status === "stopped" ? "destructive" : "secondary"}>
             {status}
           </Badge>
         </CardDescription>
@@ -32,13 +48,13 @@ export function VehicleCard({ placa, lat, lng, speed, status, type }: Vehicle) {
         <p>Speed: {speed}</p>
       </CardContent>
       <CardFooter className="gap-2">
-        <VehicleSheet>
+        <VehicleSheet vehicle={{ id, placa, lat, lng, speed, status, type }}>
           <Button variant="outline" size="icon">
             <Pencil className="w-4 h-4" />
           </Button>
         </VehicleSheet>
         <NewTooltip content="Delete vehicle">
-          <Button variant="secondary" size="icon">
+          <Button onClick={handleDeleteVehicle} variant="secondary" size="icon">
             <Trash2 className="w-4 h-4" />
           </Button>
         </NewTooltip>

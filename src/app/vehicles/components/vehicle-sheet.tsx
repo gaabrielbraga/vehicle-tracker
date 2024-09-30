@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetClose,
@@ -10,62 +9,239 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { ReactNode } from "react";
+import { Fragment, ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { NewSelect } from "@/components/select";
+import { Vehicle, VehicleTypes } from "@/types/vehicles";
+import api from "@/services/api";
+import { toast } from "sonner";
 
 interface VehicleSheetProps {
   children: ReactNode;
+  vehicle?: Vehicle | null;
 }
 
-const createVehicleSchema = z.object({
-  placa: z.string(),
-  type: z.enum(["car", "motorcycle", "truck", "bus"]),
+const options: VehicleTypes[] = ["car", "motorcycle", "truck", "bus"];
+
+const vehicleSchema = z.object({
+  sign: z
+    .string()
+    .max(7, { message: "Sign must have a maximum of 7 characters" })
+    .optional(),
+  type: z
+    .enum(["car", "motorcycle", "truck", "bus"], {
+      message: "Select a valid type.",
+    })
+    .optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+  speed: z.number().optional(),
+  status: z.enum(["stopped", "moving"]).optional(),
 });
 
-type CreateVehicle = z.infer<typeof createVehicleSchema>;
+type CreateVehicle = z.infer<typeof vehicleSchema>;
 
-export function VehicleSheet({ children }: VehicleSheetProps) {
+export function VehicleSheet({ children, vehicle }: VehicleSheetProps) {
   const form = useForm<CreateVehicle>({
     mode: "all",
     defaultValues: {
-      placa: "",
-      type: "car",
+      sign: vehicle?.placa || "",
+      type: vehicle?.type || "car",
+      lat: vehicle?.lat || undefined,
+      lng: vehicle?.lng || undefined,
+      speed: vehicle?.speed || 0,
+      status: vehicle?.status || undefined,
     },
-    resolver: zodResolver(createVehicleSchema),
+    resolver: zodResolver(vehicleSchema),
   });
 
-  const handleOnSubmit = (data: CreateVehicle) => {
-    console.log(data);
+  const handleOnSubmit = async (data: CreateVehicle) => {
+    const { sign, type, lat, lng, speed, status } = data;
+
+    const payload = {
+      placa: sign,
+      type,
+      lat,
+      lng,
+      speed,
+      status,
+    };
+
+    console.log(payload);
+    console.log(form.formState.errors);
+
+    if (vehicle && form.formState.errors) {
+      console.log("update");
+      await api
+        .put(`/vehicles/${vehicle.id}`, payload)
+        .then(() => {
+          toast.success("Vehicle updated successfully");
+        })
+        .catch(() => {
+          toast.error("Failed to update vehicle");
+        });
+    }
+
+    if (!vehicle && !form.formState.errors) {
+      console.log("create");
+
+      await api
+        .post("/vehicles", payload)
+        .then(() => {
+          toast.success("Vehicle created successfully");
+        })
+        .catch(() => {
+          toast.error("Failed to create vehicle");
+        });
+    }
+
+    form.reset();
+    vehicle = undefined;
   };
 
   return (
     <Sheet>
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent>
-        <SheetHeader>
-          <SheetTitle>New vehicle</SheetTitle>
+        <SheetHeader className="gap-2">
+          <SheetTitle>Vehicle</SheetTitle>
+          <hr />
         </SheetHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input id="name" value="Pedro Duarte" className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="username" className="text-right">
-              Username
-            </Label>
-            <Input id="username" value="@peduarte" className="col-span-3" />
-          </div>
-        </div>
-        <SheetFooter>
-          <SheetClose asChild>
-            <Button type="submit">Save changes</Button>
-          </SheetClose>
-        </SheetFooter>
+        <Form {...form}>
+          <form
+            className="flex flex-col gap-3 mt-2"
+            onSubmit={form.handleSubmit(handleOnSubmit)}
+          >
+            <FormField
+              control={form.control}
+              name="sign"
+              render={({ field }) => {
+                return (
+                  <FormItem>
+                    <FormLabel>Sign</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Type vehicle sign" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => {
+                return (
+                  <FormItem>
+                    <FormLabel>Type</FormLabel>
+                    <FormControl>
+                      <NewSelect
+                        {...field}
+                        placeholder="Select a type"
+                        options={options}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+            {vehicle && (
+              <Fragment>
+                <FormField
+                  control={form.control}
+                  name="lat"
+                  render={({ field }) => {
+                    return (
+                      <FormItem>
+                        <FormLabel>Latitude</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Type vehicle latitude"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="lng"
+                  render={({ field }) => {
+                    return (
+                      <FormItem>
+                        <FormLabel>Longitude</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Type vehicle longitude"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="speed"
+                  render={({ field }) => {
+                    return (
+                      <FormItem>
+                        <FormLabel>Speed</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Type vehicle speed" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => {
+                    return (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <FormControl>
+                          <NewSelect
+                            {...field}
+                            placeholder="Select a status"
+                            options={["stopped", "moving"]}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+              </Fragment>
+            )}
+            <SheetFooter>
+              <SheetClose asChild>
+                <Button type="submit">
+                  {vehicle ? "Update vehicle" : "Create vehicle"}
+                </Button>
+              </SheetClose>
+            </SheetFooter>
+          </form>
+        </Form>
       </SheetContent>
     </Sheet>
   );

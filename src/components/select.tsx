@@ -11,13 +11,14 @@ import {
 interface NewSelectProps {
   placeholder: string;
   options: Array<string>;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
-export function NewSelect({ placeholder, options }: NewSelectProps) {
+export function NewSelect({ placeholder, options, onChange }: NewSelectProps) {
   return (
     <Select>
       <SelectTrigger>
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={placeholder} onChange={onChange} />
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
