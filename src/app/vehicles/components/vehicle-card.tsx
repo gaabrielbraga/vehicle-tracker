@@ -15,6 +15,11 @@ import { VehicleSheet } from "./vehicle-sheet";
 import api from "@/services/api";
 import { toast } from "sonner";
 
+interface VehicleCardProps extends Vehicle {
+  setReload: (reload: boolean) => void;
+  reload: boolean;
+}
+
 export function VehicleCard({
   id,
   placa,
@@ -23,10 +28,13 @@ export function VehicleCard({
   speed,
   status,
   type,
-}: Vehicle) {
+  setReload,
+  reload,
+}: VehicleCardProps) {
   const handleDeleteVehicle = async () => {
     await api.delete(`/vehicles/${id}`).then(() => {
       toast.success("Vehicle deleted successfully");
+      setReload(!reload);
     });
   };
 
@@ -48,7 +56,11 @@ export function VehicleCard({
         <p>Speed: {speed}</p>
       </CardContent>
       <CardFooter className="gap-2">
-        <VehicleSheet vehicle={{ id, placa, lat, lng, speed, status, type }}>
+        <VehicleSheet
+          reload={reload}
+          setReload={setReload}
+          vehicle={{ id, placa, lat, lng, speed, status, type }}
+        >
           <Button variant="outline" size="icon">
             <Pencil className="w-4 h-4" />
           </Button>

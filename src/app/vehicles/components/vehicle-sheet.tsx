@@ -29,6 +29,8 @@ import { toast } from "sonner";
 interface VehicleSheetProps {
   children: ReactNode;
   vehicle?: Vehicle | null;
+  setReload: (reload: boolean) => void;
+  reload: boolean;
 }
 
 const options: VehicleTypes[] = ["car", "motorcycle", "truck", "bus"];
@@ -43,15 +45,29 @@ const vehicleSchema = z.object({
       message: "Select a valid type.",
     })
     .optional(),
-  lat: z.number().optional(),
-  lng: z.number().optional(),
-  speed: z.number().optional(),
+  lat: z
+    .union([z.string(), z.number()])
+    .transform((val) => (typeof val === "string" ? parseFloat(val) : val))
+    .optional(),
+  lng: z
+    .union([z.string(), z.number()])
+    .transform((val) => (typeof val === "string" ? parseFloat(val) : val))
+    .optional(),
+  speed: z
+    .union([z.string(), z.number()])
+    .transform((val) => (typeof val === "string" ? parseFloat(val) : val))
+    .optional(),
   status: z.enum(["stopped", "moving"]).optional(),
 });
 
 type CreateVehicle = z.infer<typeof vehicleSchema>;
 
-export function VehicleSheet({ children, vehicle }: VehicleSheetProps) {
+export function VehicleSheet({
+  children,
+  vehicle,
+  setReload,
+  reload,
+}: VehicleSheetProps) {
   const form = useForm<CreateVehicle>({
     mode: "all",
     defaultValues: {
@@ -77,28 +93,24 @@ export function VehicleSheet({ children, vehicle }: VehicleSheetProps) {
       status,
     };
 
-    console.log(payload);
-    console.log(form.formState.errors);
-
-    if (vehicle && form.formState.errors) {
-      console.log("update");
+    if (vehicle) {
       await api
         .put(`/vehicles/${vehicle.id}`, payload)
         .then(() => {
           toast.success("Vehicle updated successfully");
+          setReload(!reload);
         })
         .catch(() => {
           toast.error("Failed to update vehicle");
         });
     }
 
-    if (!vehicle && !form.formState.errors) {
-      console.log("create");
-
+    if (!vehicle && sign?.trim() !== "") {
       await api
         .post("/vehicles", payload)
         .then(() => {
           toast.success("Vehicle created successfully");
+          setReload(!reload);
         })
         .catch(() => {
           toast.error("Failed to create vehicle");
@@ -204,7 +216,11 @@ export function VehicleSheet({ children, vehicle }: VehicleSheetProps) {
                       <FormItem>
                         <FormLabel>Speed</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Type vehicle speed" />
+                          <Input
+                            {...field}
+                            type="number"
+                            placeholder="Type vehicle speed"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
