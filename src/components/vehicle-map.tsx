@@ -48,7 +48,7 @@ const VehicleMap = ({ setIsLoading }: VehicleMapProps) => {
           icon={vehicleIcon}
         >
           <Popup>
-            {vehicle.placa} - Velocidade: {vehicle.speed} km/h
+            {vehicle.placa} - Speed: {vehicle.speed} km/h
           </Popup>
         </Marker>
       )}

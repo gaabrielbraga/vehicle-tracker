@@ -123,7 +123,14 @@ export function VehicleSheet({
 
   return (
     <Sheet>
-      <SheetTrigger asChild>{children}</SheetTrigger>
+      <SheetTrigger
+        asChild
+        onClick={() => {
+          form.reset();
+        }}
+      >
+        {children}
+      </SheetTrigger>
       <SheetContent>
         <SheetHeader className="gap-2">
           <SheetTitle>Vehicle</SheetTitle>
